@@ -1,0 +1,5 @@
+com\test\pages\HomePage.class
+com\test\pages\BasePage.class
+com\test\pages\Page.class
+com\test\pages\ResultPage.class
+utilities\BaseInit.class

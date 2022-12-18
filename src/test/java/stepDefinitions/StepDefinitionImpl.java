@@ -1,11 +1,9 @@
 package stepDefinitions;
 
-import com.test.pages.AddCartPage;
 import com.test.pages.HomePage;
 import com.test.pages.ResultPage;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
-import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -17,61 +15,64 @@ import java.io.IOException;
 public class StepDefinitionImpl extends BaseInit {
 
 
-    public float productPrice;
-    HomePage homePage;
-    ResultPage resultPage;
-    AddCartPage addCartPage;
-
     public StepDefinitionImpl() throws IOException {
         super();
     }
 
     @Before
-    public void launchTheEcommerceApplication() {
+    public void launchTheApplication() {
 
         driver = invokeBrowserAndLaunchURL();
+        page.getInstance(HomePage.class).acceptCookies();
     }
 
-    @Given("^search for the (.+)$")
-    public void search_for_the(String productName) {
+    @Given("^Enter the (.+) and (.+)$")
+    public void enterTheOriginAndDestination(String org, String dest) {
+        HomePage homePage = page.getInstance(HomePage.class);
+        homePage.fillOriginAndDestinationWithAllDetails(org, dest);
+    }
 
-       homePage =  page.getInstance(HomePage.class);
-       homePage.getSearchField().sendKeys(productName);
-       homePage.clickSubmitButton();
+    @When("Click search flight button")
+    public void clickSearchFlightButton() {
+        page.getInstance(HomePage.class).clickSearchButton();
+    }
+
+
+    @Then("^Assert flight are listed with the search inputs (.+) (.+)$")
+    public void assertFlightAreListedWithTheSearchInputs(String origin, String destination) {
+        ResultPage resultPage = page.getInstance(ResultPage.class);
+        Assert.assertTrue(resultPage.getSearchResultsOrigin().stream().allMatch(s->s.getText().contains(origin)),"Origin station is not same as search input");
+        Assert.assertTrue(resultPage.getSearchResultsDestination().stream().allMatch(s->s.getText().contains(destination)) ,"Destination station is not same as search input");
+    }
+
+
+    @Given("^Fill all the details with \"([^\"]*)\" and \"([^\"]*)\"$")
+    public void fillAllDetails(String org, String dest)  {
+        HomePage homePage =  page.getInstance(HomePage.class);
+        homePage.fillOriginAndDestinationWithAllDetails(org,dest);
+    }
+
+    @When("^Click reset filter$")
+    public void clickResetFilter()  {
+        page.getInstance(HomePage.class).clickResetFilter();
 
     }
 
-    @When("^Add the first product in add cart twice$")
-    public void add_the_first_product_in_add_cart_twice()  {
-        resultPage =   page.getInstance(ResultPage.class);
-        resultPage.openFirstProduct();
-        productPrice = resultPage.getProductPrice();
-        resultPage.addQuantityAsTwo();
-        resultPage.addProductsToCart();
+    @Then("^Verify the search inputs are reseted$")
+    public void verifySearchInputsAreReseted() {
+        HomePage homePage =  page.getInstance(HomePage.class);
+        Assert.assertTrue(homePage.isOutboundDateFieldHidden());
+        Assert.assertTrue(homePage.isPassengerFieldHidden());
     }
 
-    @And("Assert that total price and quantity are correct")
-    public void assert_that_the_total_price_and_quantity_are_correct() {
-        addCartPage =   page.getInstance(AddCartPage.class);
-       float totalPriceInCart = addCartPage.getTotalCost();
-       float  sumOfAllProducts = productPrice*2;
-       Assert.assertEquals(sumOfAllProducts , totalPriceInCart);
-    }
-
-    @And("Reduce quantity to one in Cart section for the item selected")
-    public void reduce_quantity_to_one_in_cart_section_for_the_item_selected() {
-        addCartPage.goToCartSection();
-        addCartPage.reduceQuantityToOne();
-    }
-
-    @Then("Assert that total price has been correctly changed")
-    public void assert_that_total_price_has_been_correctly_changed()  {
-      float updatedProductPrice = addCartPage.getUpdatedAmount();
-        Assert.assertEquals(productPrice, updatedProductPrice);
-    }
 
     @After
     public void tearDown() {
         driver.quit();
     }
+
+
+
 }
+
+
